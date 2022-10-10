@@ -2,10 +2,11 @@
 # vi: set ft=ruby :
 
 # Topology
-#                   nw1                          nw2                          nw3
-#              10.0.101.0/24                10.0.102.0/30                10.0.103.0/24
+#                   nw1                                                       nw2
+#              10.0.101.0/24                                             10.0.103.0/24
 #  server01 ------------------- switch01 ------------------- switch01 ------------------- server02
-#       swp1 .2             .1 swp2  swp1 .1             .2 swp1  swp2 .1             .2 swp2
+#       swp1 .2             .1 swp2  swp1                   swp1  swp2 .1             .2 swp2
+#                           lo: 10.0.102.1/32           lo: 10.0.102.2/32
 #
 
 serverSettings = [

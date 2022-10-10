@@ -16,7 +16,7 @@ There are 2 switches and 2 servers.
 And the switches distribute each directly connected route to the another switch using BGP.
 
 <div align="center">
-  <img src="https://github.com/um7a/network_sandbox/raw/bgp_2switch/bgp_2switch/docs/topology.png" width="100%">
+  <img src="https://github.com/um7a/network_sandbox/raw/main/bgp_2switch/docs/topology.png" width="100%">
 </div>
 
 ## Usage

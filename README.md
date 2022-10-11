@@ -9,5 +9,5 @@ Network sandbox environment using Vagrant and VirtualBox.
 
 ## Usage
 
-You can create sandbox environments by using the Vagrantfile of each subdirectories.  
-For more information, please read README.md in each subdirectories.
+Sandbox environments can be created using the Vagrantfile in each subdirectory.  
+For more information, please read README.md in each subdirectory.

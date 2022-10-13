@@ -44,7 +44,7 @@ $ vagrant ssh switch01  # (or switch02)
 Show route.
 
 ```bash
-$ sudo net show route
+vagrant@switch01:mgmt:~$ sudo net show route
 show ip route
 =============
 Codes: K - kernel route, C - connected, S - static, R - RIP,
@@ -53,10 +53,9 @@ Codes: K - kernel route, C - connected, S - static, R - RIP,
        F - PBR, f - OpenFabric,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
-C>* 10.0.101.0/24 is directly connected, swp2, 00:13:05
-C>* 10.0.102.1/32 is directly connected, lo, 00:13:05
-B>* 10.0.102.2/32 [20/0] via fe80::a00:27ff:fe99:67d5, swp1, weight 1, 00:11:16
-B>* 10.0.103.0/24 [20/0] via fe80::a00:27ff:fe99:67d5, swp1, weight 1, 00:11:16
+C>* 10.0.101.0/24 is directly connected, swp2, 00:07:28
+C>* 10.0.102.1/32 is directly connected, lo, 00:07:29
+B>* 10.0.103.0/24 [20/0] via fe80::a00:27ff:feaf:6114, swp1, weight 1, 00:02:49
 
 
 
@@ -68,8 +67,8 @@ Codes: K - kernel route, C - connected, S - static, R - RIPng,
        f - OpenFabric,
        > - selected route, * - FIB route, q - queued, r - rejected, b - backup
        t - trapped, o - offload failure
-C * fe80::/64 is directly connected, swp1, 00:13:01
-C>* fe80::/64 is directly connected, swp2, 00:13:04
+C * fe80::/64 is directly connected, swp1, 00:07:20
+C>* fe80::/64 is directly connected, swp2, 00:07:28
 ```
 
 Show BGP neigbor.  

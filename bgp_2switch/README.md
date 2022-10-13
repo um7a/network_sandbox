@@ -44,7 +44,7 @@ $ vagrant ssh switch01  # (or switch02)
 Show route.
 
 ```bash
-vagrant@switch01:mgmt:~$ sudo net show route
+$ sudo net show route
 show ip route
 =============
 Codes: K - kernel route, C - connected, S - static, R - RIP,

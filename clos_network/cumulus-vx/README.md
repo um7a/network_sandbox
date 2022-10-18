@@ -18,19 +18,19 @@ This is a clos network sandbox environment.
 There are 2 pods in this network. Each pods are interconnected across the super spines. Each pod has 2 leaf and 2 spine switches.
 
 <div align="center">
-  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/docs/topology_hostname.png" width="80%">
+  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/cumulus-vx/docs/topology_hostname.png" width="80%">
 </div>
 
 Each node has the following interfaces and IP Addresses.
 
 <div align="center">
-  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/docs/topology_ip_address.png" width="80%">
+  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/cumulus-vx/docs/topology_ip_address.png" width="80%">
 </div>
 
 Each switch has the following AS Number.
 
 <div align="center">
-  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/docs/topology_as_number.png" width="80%">
+  <img src="https://github.com/um7a/network_sandbox/raw/main/clos_network/cumulus-vx/docs/topology_as_number.png" width="80%">
 </div>
 
 ## Usage

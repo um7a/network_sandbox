@@ -1,0 +1,228 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Topology
+#                   nw1                          nw2                          nw3
+#              10.0.101.0/24                10.0.102.0/30                10.0.103.0/24
+#  server01 ------------------- switch01 ------------------- switch01 ------------------- server02
+#            .2             .1 Et2    Et1 .1             .2 Et1    Et2 .1             .2
+#
+
+serverSettings = [
+  {
+    "box" => "ubuntu/jammy64",
+    "box_version" => "20221004.0.0",
+    "hostname" => "server01",
+    "network" => {
+      "name" => "nw1",
+      "ip" => "10.0.101.2/24",
+      "gateway" => "10.0.101.1"
+    }
+  },
+  {
+    "box" => "ubuntu/jammy64",
+    "box_version" => "20221004.0.0",
+    "hostname" => "server02",
+    "network" => {
+      "name" => "nw3",
+      "ip" => "10.0.103.2/24",
+      "gateway" => "10.0.103.1"
+    }
+  }
+]
+
+switchSettings = [
+  {
+    "box" => "vEOS-lab-4.19.10M",
+    "hostname" => "switch01",
+    "network" => [
+      # Ethernet1
+      {
+        "name" => "nw2",
+      },
+      # Ethernet2
+      {
+        "name" => "nw1",
+      },
+    ],
+    "config" => <<-"EOF"
+      interface Ethernet1
+        no switchport
+        ip address 10.0.102.1/30
+      exit
+      interface Ethernet2
+        no switchport
+        ip address 10.0.101.1/24
+      exit
+
+      interface Ethernet1
+        ip ospf area 0.0.0.0
+        ip ospf cost 10
+      exit
+
+      ip routing
+
+      router ospf 10
+        router-id 10.0.102.1
+        redistribute connected route-map ALLOW_NW1
+      exit
+
+      ip prefix-list NW1 seq 10 permit 10.0.101.0/24
+
+      route-map ALLOW_NW1 permit 10
+        match ip address prefix-list NW1
+      exit
+    EOF
+  },
+  {
+    "box" => "vEOS-lab-4.19.10M",
+    "hostname" => "switch02",
+    "network" => [
+      # Ethernet1
+      {
+        "name" => "nw2",
+      },
+      # Ethernet2
+      {
+        "name" => "nw3",
+      },
+    ],
+    "config" => <<-"EOF"
+      interface Ethernet1
+        no switchport
+        ip address 10.0.102.2/30
+      exit
+      interface Ethernet2
+        no switchport
+        ip address 10.0.103.1/24
+      exit
+
+      interface Ethernet1
+        ip ospf area 0.0.0.0
+        ip ospf cost 10
+      exit
+
+      ip routing
+
+      router ospf 10
+        router-id 10.0.102.2
+        redistribute connected route-map ALLOW_NW3
+      exit
+
+      ip prefix-list NW3 seq 10 permit 10.0.103.0/24
+
+      route-map ALLOW_NW3 permit 10
+        match ip address prefix-list NW3
+      exit
+    EOF
+  }
+]
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+Vagrant.configure("2") do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 2048 # Allocated only 1024 mb made operation too slow.
+    vb.cpus = 2      # Allocating only 1 cpu cause "Kernel panic - not syncing" error when booting vm.
+  end
+
+  switchSettings.each do |switchSetting|
+    config.vm.define switchSetting["hostname"] do |device|
+      # Every Vagrant development environment requires a box. You can search for
+      # boxes at https://vagrantcloud.com/search.
+      device.vm.box = switchSetting["box"]
+      device.vm.hostname = switchSetting["hostname"]
+
+      # Add EthernetN interfaces to virtual machines.
+      switchSetting["network"].each_with_index do |networkSetting, index|
+        device.vm.network "private_network", virtualbox__intnet: networkSetting["name"], auto_config: false
+      end
+
+      # Disable automatic box update checking. If you disable this, then
+      # boxes will only be checked for updates when the user runs
+      # `vagrant box outdated`. This is not recommended.
+      # config.vm.box_check_update = false
+      device.vm.box_check_update = false
+
+      device.vm.provider "virtualbox" do |vb|
+        # Set VBoxMessage command's Port Mode option.
+        # Because vEOS virtual machines refer to the same named pipe path, and this cause "vagrant up" failed.
+        # The actual error message is the following.
+        #
+        #   ==> switch02: Booting VM...
+        #   There was an error while executing `VBoxManage`, a CLI used by Vagrant
+        #   for controlling VirtualBox. The command and stderr is shown below.
+        #
+        #   Command: ["startvm", "a4132fe0-15f3-4e3f-b1d7-915378971b30", "--type", "headless"]
+        #
+        #   Stderr: VBoxManage.exe: error: NamedPipe#0 failed to create named pipe \\.\pipe\vEOS-build-serial (VERR_PIPE_BUSY)
+        #   VBoxManage.exe: error: Details: code E_FAIL (0x80004005), component ConsoleWrap, interface IConsole
+        #
+        # About detail of the options, see https://www.virtualbox.org/manual/ch03.html#serialports
+        vb.customize ["modifyvm", :id, "--uartmode1", "server", "\\\\.\\pipe\\#{switchSetting["hostname"]}"]
+      end
+
+      device.vm.provision "shell", inline: <<-SHELL
+        FastCli -p 15 -c "
+        configure
+        #{switchSetting["config"]}
+        end
+        copy running-config startup-config
+        "
+      SHELL
+    end
+  end
+
+  serverSettings.each do |serverSetting|
+    config.vm.define serverSetting["hostname"] do |device|
+      # Every Vagrant development environment requires a box. You can search for
+      # boxes at https://vagrantcloud.com/search.
+      device.vm.box = serverSetting["box"]
+      device.vm.box_version = serverSetting["box_version"]
+      device.vm.hostname = serverSetting["hostname"]
+
+      # Disable automatic box update checking. If you disable this, then
+      # boxes will only be checked for updates when the user runs
+      # `vagrant box outdated`. This is not recommended.
+      # config.vm.box_check_update = false
+      device.vm.box_check_update = false
+
+      # Create a private network, which allows host-only access to the machine
+      # using a specific IP.
+      # config.vm.network "private_network", ip: "192.168.33.10"
+      device.vm.network "private_network", virtualbox__intnet: serverSetting["network"]["name"], auto_config: false
+
+      # Enable provisioning with a shell script. Additional provisioners such as
+      # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
+      # documentation for more information about their specific syntax and use.
+      # config.vm.provision "shell", inline: <<-SHELL
+      #   apt-get update
+      #   apt-get install -y apache2
+      # SHELL
+      device.vm.provision "shell" do |shell|
+        cmd = ""
+        cmd += "sudo tee /etc/netplan/51-cloud-init.yaml << EOF\n"
+        cmd += "network:\n"
+        cmd += "  ethernets:\n"
+        cmd += "    enp0s8:\n"
+        cmd += "      dhcp4: false\n"
+        cmd += "      dhcp6: false\n"
+        cmd += "      addresses: [#{serverSetting["network"]["ip"]}]\n"
+        cmd += "      routes:\n"
+        cmd += "        - to: default\n"
+        cmd += "          via: #{serverSetting["network"]["gateway"]}\n"
+        cmd += "  version: 2\n"
+        cmd += "EOF\n"
+
+        cmd += "sudo netplan apply\n"
+
+        shell.inline = cmd
+      end
+    end
+  end
+end
